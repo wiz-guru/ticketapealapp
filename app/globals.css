@@ -1,0 +1,97 @@
+:root {
+  --bg: #0f1221;
+  --panel: #181c2f;
+  --text: #e9ecf5;
+  --muted: #9aa3bd;
+  --accent: #5b8cff;
+  --border: #2a3050;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.site-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.brand { color: var(--text); font-weight: 700; text-decoration: none; font-size: 18px; }
+
+.container { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+h1 { font-size: 30px; line-height: 1.2; }
+h2 { font-size: 20px; margin-top: 28px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin: 16px 0;
+}
+
+label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+input, select, textarea {
+  width: 100%;
+  background: #11152a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+}
+textarea { min-height: 110px; resize: vertical; }
+
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+}
+.dropzone:hover { border-color: var(--accent); }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+.muted { color: var(--muted); }
+.letter {
+  white-space: pre-wrap;
+  background: #11152a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  font-size: 14px;
+}
+.steps { display: flex; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.steps .active { color: var(--accent); font-weight: 600; }
