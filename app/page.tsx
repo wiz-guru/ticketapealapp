@@ -51,7 +51,7 @@ export default function Home() {
             </p>
             <ul className="clean muted">
               <li>No account and no payment, ever.</li>
-              <li>Your ticket details never leave your browser.</li>
+              <li>Your ticket details stay in your browser — we store nothing on a server.</li>
               <li>No insurance referrals, no data resale, no ads.</li>
             </ul>
           </div>
@@ -83,7 +83,11 @@ export default function Home() {
           </details>
           <details>
             <summary>What happens to my data?</summary>
-            <div className="a">It stays in your browser to build the letter. There&apos;s no server-side database, no account, and nothing is sold or shared.</div>
+            <div className="a">Your ticket details are used in your browser to build the letter. There&apos;s no account and no server-side database, and nothing is sold or shared. The one exception is the optional &ldquo;Polish with AI&rdquo; button (see below), which you choose to use.</div>
+          </details>
+          <details>
+            <summary>What is &ldquo;Polish with AI&rdquo;?</summary>
+            <div className="a">An optional button on the letter screen. If you use it, your draft letter is sent to an AI service that rewrites it to read more smoothly — the bylaw citations and facts are kept unchanged. It&apos;s entirely optional; skip it and everything stays in your browser. Always review the result before submitting.</div>
           </details>
 
           <div style={{ textAlign: "center", marginTop: 28 }}>

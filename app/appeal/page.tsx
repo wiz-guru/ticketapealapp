@@ -124,6 +124,8 @@ export default function AppealPage() {
     return gs.sort((a, b) => Number(recommended.has(b.id)) - Number(recommended.has(a.id)));
   }, [offence, recommended]);
 
+  const selGround = offence?.grounds.find((g) => g.id === groundId);
+
   // 15-day screening deadline computed from the violation date.
   const deadline = useMemo(() => {
     const d = new Date(ticket.violationDate);
@@ -363,6 +365,22 @@ export default function AppealPage() {
               </a>
             </div>
           )}
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Your appeal at a glance</h2>
+            <p className="small" style={{ margin: "4px 0" }}><strong>Ticket type:</strong> {offence?.shortName} ({offence?.code})</p>
+            <p className="small" style={{ margin: "4px 0" }}><strong>Bylaw:</strong> {offence?.bylaw}</p>
+            <p className="small" style={{ margin: "4px 0" }}><strong>Set fine:</strong> {offence?.setFine}</p>
+            {selGround && (
+              <p className="small" style={{ margin: "4px 0" }}>
+                <strong>Your grounds:</strong> {selGround.label}
+                {STRENGTH[selGround.id] ? " — " + STRENGTH[selGround.id] : ""}
+              </p>
+            )}
+            <p className="muted small" style={{ margin: "8px 0 0" }}>
+              Attach the {evidence.length} item{evidence.length === 1 ? "" : "s"} of evidence listed below.
+              This is a self-help draft, not a prediction of the outcome.
+            </p>
+          </div>
           <div className="card">
             <h2 style={{ marginTop: 0 }}>Your draft — paste this into the City portal</h2>
             <div className="letter">{letter}</div>

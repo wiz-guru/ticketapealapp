@@ -17,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="nav">
               <a href="/#how">How it works</a>
               <a href="/#faq">FAQ</a>
+              <a href="/guide">Guide</a>
               <a href="/appeal" className="btn" style={{ padding: "9px 16px", fontSize: 14 }}>Start</a>
             </nav>
           </div>
