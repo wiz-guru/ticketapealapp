@@ -52,3 +52,20 @@ DNS records it shows at your registrar. HTTPS is automatic.
   fresh.
 - **Old version showing**: you didn't push the latest commit — Push origin in
   GitHub Desktop, Vercel redeploys automatically.
+
+## Optional: enable the "Polish with AI" button
+
+The core app needs no env vars. The optional AI-polish button on the result step
+needs an Anthropic API key:
+
+1. Get a key at console.anthropic.com.
+2. Vercel → your project → Settings → Environment Variables → add
+   `ANTHROPIC_API_KEY` = your key. (Optional: `POLISH_MODEL`, default
+   `claude-sonnet-4-6`.)
+3. Redeploy. Until the key is set, the button shows a friendly "not configured"
+   message and the deterministic letter still works fully.
+
+Note: with AI polish enabled, the letter text is sent to Anthropic's API to be
+rewritten (the citations/facts are instructed to stay locked). This is the one
+feature where data leaves the browser — worth a line in your privacy copy before
+you promote it.

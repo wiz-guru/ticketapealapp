@@ -43,6 +43,47 @@ function parseTicket(text: string): Partial<TicketData> {
   return out;
 }
 
+// Try to detect which offence a ticket photo is about, aligned to OFFENCE_CODES
+// order. Returns an index into OFFENCE_CODES, or -1 if unsure.
+const OFFENCE_PATTERNS: RegExp[] = [
+  /910-?4|parking machine|pay[- ]?and[- ]?display|\bmeter\b|fail to (activate|display)/i,
+  /950-?405a|signed highway.*prohibited|prohibited \(?day|no parking/i,
+  /950-?405d|no stopping|stop.*prohibited|rush hour/i,
+  /950-?405f|excess of permitted|permitted time/i,
+  /400d\(?1|driveway|laneway/i,
+  /400d\(?2|fire hydrant|hydrant/i,
+  /400d\(?3|intersecting roadway/i,
+  /400d\(?5|longer than 3|3 hours/i,
+  /400d\(?10|number plate|valid.*plate/i,
+  /400b\(?2|intersection|pedestrian crossover|crosswalk/i,
+  /400f\(?1|transit stop|bus stop|streetcar/i,
+  /950-?406|snow route|snow removal/i,
+];
+function detectOffence(text: string): number {
+  for (let i = 0; i < OFFENCE_PATTERNS.length; i++) {
+    if (OFFENCE_PATTERNS[i].test(text)) return i;
+  }
+  return -1;
+}
+
+// Honest, non-guaranteeing strength of each argument type (by ground id).
+const STRENGTH: Record<string, string> = {
+  "grace-period": "Commonly strong",
+  "valid-payment": "Commonly strong",
+  "signage-defect": "Commonly strong",
+  "factual-error": "Commonly strong",
+  "outside-hours": "Commonly strong",
+  "plate-valid": "Commonly strong",
+  "not-located": "Commonly strong",
+  "not-in-zone": "Commonly strong",
+  "not-obstructing": "Commonly strong",
+  "distance": "Evidence-dependent",
+  "within-time": "Evidence-dependent",
+  "moved-within": "Evidence-dependent",
+  "no-ban": "Evidence-dependent",
+  "undue-hardship": "Situational",
+};
+
 export default function AppealPage() {
   const [step, setStep] = useState<Step>("details");
   const [ticket, setTicket] = useState<TicketData>(EMPTY_TICKET);
@@ -57,6 +98,9 @@ export default function AppealPage() {
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrPct, setOcrPct] = useState(0);
   const [ocrDone, setOcrDone] = useState(false);
+  const [polishBusy, setPolishBusy] = useState(false);
+  const [original, setOriginal] = useState("");
+  const [ocrOffence, setOcrOffence] = useState<string>("");
 
   const offence = OFFENCE_CODES[offenceIndex];
   const groundIdsHere = useMemo(() => new Set(offence?.grounds.map((g) => g.id)), [offence]);
@@ -125,8 +169,16 @@ export default function AppealPage() {
           if (m.status === "recognizing text") setOcrPct(Math.round(m.progress * 100));
         },
       });
-      const parsed = parseTicket(data.text || "");
+      const text = data.text || "";
+      const parsed = parseTicket(text);
       setTicket((t) => ({ ...t, ...parsed }));
+      const oi = detectOffence(text);
+      if (oi >= 0) {
+        setOffenceIndex(oi); setGroundId(""); setAnswers({});
+        setOcrOffence(OFFENCE_CODES[oi].shortName);
+      } else {
+        setOcrOffence("");
+      }
       setOcrDone(true);
     } catch {
       setError("Couldn't read that photo. Please enter the details manually below.");
@@ -145,11 +197,28 @@ export default function AppealPage() {
       });
       if (!res.ok) throw new Error("Could not generate the letter. Try again.");
       const data = await res.json();
-      setLetter(data.letter); setEvidence(data.evidence || []); setStep("result");
+      setLetter(data.letter); setEvidence(data.evidence || []); setOriginal(""); setStep("result");
       window.scrollTo({ top: 0 });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed.");
     } finally { setBusy(false); }
+  }
+
+  async function polish() {
+    setPolishBusy(true); setError("");
+    try {
+      const res = await fetch("/api/polish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ letter }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not polish the letter.");
+      if (!original) setOriginal(letter);
+      setLetter(data.letter);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Polish failed.");
+    } finally { setPolishBusy(false); }
   }
 
   return (
@@ -175,7 +244,7 @@ export default function AppealPage() {
               style={{ display: "none" }} onChange={onPhoto} disabled={ocrBusy} />
             {ocrDone && !ocrBusy && (
               <span className="small" style={{ marginLeft: 10, color: "var(--ok)" }}>
-                Filled what we could — please check every field.
+                Filled what we could{ocrOffence ? " — detected: " + ocrOffence : ""} — please check every field.
               </span>
             )}
             <p className="muted small" style={{ marginTop: 6 }}>
@@ -224,11 +293,21 @@ export default function AppealPage() {
 
           <div className="card">
             <h2 style={{ marginTop: 0 }}>Choose your grounds</h2>
+            <p className="muted small" style={{ marginTop: 0 }}>
+              Strength reflects how these arguments generally fare — not a prediction for your case.
+            </p>
             {sortedGrounds.map((g) => (
               <div key={g.id} className={"opt" + (groundId === g.id ? " sel" : "")} onClick={() => setGroundId(g.id)}>
                 <div className="top">
                   <h3>{g.label}</h3>
-                  {recommended.has(g.id) && <span className="badge">Recommended</span>}
+                  <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    {STRENGTH[g.id] && (
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".02em", background: "#eef1f6", color: "#5b6675", borderRadius: 999, padding: "3px 9px", whiteSpace: "nowrap" }}>
+                        {STRENGTH[g.id]}
+                      </span>
+                    )}
+                    {recommended.has(g.id) && <span className="badge">Recommended</span>}
+                  </span>
                 </div>
                 <p className="muted small" style={{ margin: "6px 0 0" }}>{g.whenToUse}</p>
                 {groundId === g.id && (
@@ -290,7 +369,17 @@ export default function AppealPage() {
             <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
               <button className="btn" onClick={() => navigator.clipboard.writeText(letter)}>Copy letter</button>
               <button className="btn btn-secondary" onClick={() => setStep("ground")}>Edit grounds</button>
+              <button className="btn btn-secondary" onClick={polish} disabled={polishBusy}>
+                {polishBusy ? "Polishing…" : original ? "Re-polish with AI" : "Polish with AI (beta)"}
+              </button>
+              {original && (
+                <button className="btn btn-secondary" onClick={() => { setLetter(original); setOriginal(""); }}>Revert</button>
+              )}
             </div>
+            <p className="muted small" style={{ marginTop: 10 }}>
+              &ldquo;Polish with AI&rdquo; rewrites the wording to read more persuasively; the bylaw
+              citations and facts are kept as-is. Always review before submitting.
+            </p>
           </div>
 
           {evidence.length > 0 && (
