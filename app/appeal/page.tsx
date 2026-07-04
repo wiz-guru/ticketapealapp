@@ -20,6 +20,29 @@ const GUIDE: { q: string; ids: string[] }[] = [
   { q: "I can't reasonably afford to pay this penalty", ids: ["undue-hardship"] },
 ];
 
+// Best-effort parse of OCR text from a ticket photo into form fields.
+// Runs on whatever Tesseract returns; the user confirms/edits everything after.
+function parseTicket(text: string): Partial<TicketData> {
+  const out: Partial<TicketData> = {};
+  const clean = text.replace(/[ \t]+/g, " ");
+  const dm =
+    clean.match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/) ||
+    clean.match(/\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b/);
+  if (dm) {
+    let y: string, mo: string, d: string;
+    if (dm[1].length === 4) { y = dm[1]; mo = dm[2]; d = dm[3]; }
+    else { d = dm[1]; mo = dm[2]; y = dm[3]; }
+    out.violationDate = y + "-" + mo.padStart(2, "0") + "-" + d.padStart(2, "0");
+  }
+  const tm = clean.match(/\b(\d{1,2}:\d{2})\s*([AaPp]\.?[Mm]\.?)?\b/);
+  if (tm) out.violationTime = (tm[1] + (tm[2] ? " " + tm[2].toUpperCase().replace(/\./g, "") : "")).trim();
+  const vn = clean.match(/(?:violation|notice|penalty|infraction)[^\d]{0,12}([A-Za-z]?\d[\d\s-]{5,})/i);
+  if (vn) out.citationNumber = vn[1].replace(/\s/g, "").trim();
+  const pl = clean.match(/(?:plate|licence|license|marker)[^A-Z0-9]{0,8}([A-Z0-9]{2,4}[\s-]?[A-Z0-9]{2,4})/i);
+  if (pl) out.plateNumber = pl[1].replace(/\s/g, "").toUpperCase().trim();
+  return out;
+}
+
 export default function AppealPage() {
   const [step, setStep] = useState<Step>("details");
   const [ticket, setTicket] = useState<TicketData>(EMPTY_TICKET);
@@ -31,6 +54,9 @@ export default function AppealPage() {
   const [evidence, setEvidence] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrPct, setOcrPct] = useState(0);
+  const [ocrDone, setOcrDone] = useState(false);
 
   const offence = OFFENCE_CODES[offenceIndex];
   const groundIdsHere = useMemo(() => new Set(offence?.grounds.map((g) => g.id)), [offence]);
@@ -88,6 +114,27 @@ export default function AppealPage() {
     setOffenceIndex(i); setGroundId(""); setAnswers({});
   }
 
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setOcrBusy(true); setOcrPct(0); setOcrDone(false); setError("");
+    try {
+      const Tesseract = (await import("tesseract.js")).default;
+      const { data } = await Tesseract.recognize(file, "eng", {
+        logger: (m: { status: string; progress: number }) => {
+          if (m.status === "recognizing text") setOcrPct(Math.round(m.progress * 100));
+        },
+      });
+      const parsed = parseTicket(data.text || "");
+      setTicket((t) => ({ ...t, ...parsed }));
+      setOcrDone(true);
+    } catch {
+      setError("Couldn't read that photo. Please enter the details manually below.");
+    } finally {
+      setOcrBusy(false);
+    }
+  }
+
   async function generate() {
     setBusy(true); setError("");
     try {
@@ -120,7 +167,22 @@ export default function AppealPage() {
       {step === "details" && (
         <div className="card">
           <h2 style={{ marginTop: 0 }}>Enter your ticket details</h2>
-          <p className="muted small">Copy these straight off your Parking Violation Notice. Photo auto-fill is coming later.</p>
+          <div style={{ margin: "0 0 14px" }}>
+            <label htmlFor="ticketPhoto" className="btn btn-secondary" style={{ cursor: "pointer" }}>
+              {ocrBusy ? "Reading photo… " + ocrPct + "%" : "Auto-fill from a photo (beta)"}
+            </label>
+            <input id="ticketPhoto" type="file" accept="image/*" capture="environment"
+              style={{ display: "none" }} onChange={onPhoto} disabled={ocrBusy} />
+            {ocrDone && !ocrBusy && (
+              <span className="small" style={{ marginLeft: 10, color: "var(--ok)" }}>
+                Filled what we could — please check every field.
+              </span>
+            )}
+            <p className="muted small" style={{ marginTop: 6 }}>
+              Your photo is read on your device and never uploaded. OCR is imperfect —
+              always confirm the fields below. Or just type them in.
+            </p>
+          </div>
           <div className="row">
             <div><label>Violation / notice number</label><input value={ticket.citationNumber} onChange={set("citationNumber")} /></div>
             <div><label>Licence plate</label><input value={ticket.plateNumber} onChange={set("plateNumber")} /></div>

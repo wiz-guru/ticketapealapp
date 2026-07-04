@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
-// v2 FEATURE -- NOT in v1.
-// v1 uses manual entry (a simple form). Photo OCR auto-fill is planned for v2:
-// accept an image, send it to a vision model, and pre-fill the TicketData form.
+// NOT USED. OCR now runs entirely CLIENT-SIDE (Tesseract.js in /appeal), so the
+// photo never leaves the user's device and there is no server cost or API key.
+// This route is kept only as a placeholder in case a future opt-in server-side
+// vision upgrade is added (which would require disclosure + an API key).
 export async function POST() {
   return NextResponse.json(
-    { error: "OCR is a v2 feature. v1 uses manual entry." },
+    { error: "OCR runs client-side in the browser; no server endpoint is used." },
     { status: 501 }
   );
 }
