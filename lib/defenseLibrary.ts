@@ -5,15 +5,18 @@
 // arguments — it only renders what's in this file. To add offence codes, append
 // objects to OFFENCE_CODES below. No other file changes needed.
 //
-// VERIFICATION STATUS (June 2026):
-//  Section numbers, short-form wording, and set fines below are taken from the
-//  City of Toronto report "Increase in Parking Violation Notice Penalty Amounts
-//  & Establishment of New EV Parking Offences" (2024). Fines are the CURRENT
-//  amounts from that report's *Addition to Schedule A* tables, which took effect
-//  **August 1, 2024** (NOT the older deletion-table amounts). Still flagged
-//  VERIFY: (1) the on-street paid-parking grace-period minutes, and (2) a final
-//  confirmation against the live Municipal Code in case of changes after 2024.
-//  The legal *grounds* are drafted arguments — a law-student review is advised.
+// VERIFICATION STATUS (July 2026):
+//  Set fines below are CONFIRMED against the live Toronto Municipal Code
+//  Chapter 610 (Administrative Penalty By-law), Schedule A, dated Feb 10, 2025 —
+//  the City's authoritative current source (it supersedes the 2024 report).
+//  MERITS ARE DECIDED AT SCREENING: under § 610-2.2B(4)(a) a screening officer
+//  determines "whether it was reasonable for the enforcement officer to impose
+//  the penalty" and may cancel if the recipient shows, on a balance of
+//  probabilities, that "the violation was not committed as set out in the
+//  penalty notice" — exactly what the grounds below argue. Undue hardship is a
+//  separate cancel/vary/extend path under the same section. Still flagged
+//  VERIFY: only (1) the paid-parking grace-period minutes (offence 1) and
+//  (2) the snow-route ban trigger (offence 12) — both live in Ch. 910/950.
 //
 // Sources:
 //  - City of Toronto, "Dispute Your Parking Violation" (modified 2026-03-20)
@@ -21,7 +24,8 @@
 //    Addition to Schedule A tables (effective 2024-08-01)
 //  - Toronto Municipal Code Ch. 950 (Traffic and Parking) and Ch. 910
 //    (Parking Machines, Parking Meters and Mobile)
-//  - Toronto Municipal Code Ch. 610 (Administrative Penalty By-law)
+//  - Toronto Municipal Code Ch. 610 (Administrative Penalty By-law), Feb 10, 2025 —
+//    authoritative Schedule A set fines + § 610-2.2B screening-officer powers
 // ============================================================================
 
 export interface DefenseGround {
@@ -47,9 +51,9 @@ export interface OffenceCode {
 // occurred (factual/legal error) or undue hardship. Grounds below argue the
 // violation did not occur, and every letter is framed around that standard.
 export const SCREENING_FRAMING =
-  "I am requesting a screening review of this Parking Violation Notice. I submit " +
-  "that the penalty should be cancelled because the violation did not occur, for " +
-  "the reason(s) set out below.";
+  "I am requesting a screening review of this Parking Violation Notice. On a " +
+  "balance of probabilities, the violation was not committed as set out in the " +
+  "penalty notice, for the reason(s) below. I ask that the penalty be cancelled.";
 
 // Reusable ground builder for the very common "wrong details on the ticket".
 function factualError(): DefenseGround {
@@ -133,7 +137,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     bylaw:
       "Toronto Municipal Code Ch. 910 — e.g. § 910-4A(1) fee not paid / fail to " +
       "activate; § 910-4C fail to display receipt; § 910-6 exceeds maximum time",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$50.00 (Ch. 610, Feb 2025)",
     verifyNote:
       "Match the exact § printed on the ticket. GRACE PERIOD: a 10-min " +
       "Pay-and-Display grace (bylaw 2014, confirmed by Parking Enforcement) is " +
@@ -183,7 +187,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
       "official signs. (Short form: Park – Signed Highway – During Prohibited " +
       "(Day/Time).)",
     bylaw: "Toronto Municipal Code § 950-405A",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$65.00 (Ch. 610, Feb 2025)",
     verifyNote:
       "Confirm the ticket cites 950-405A; related signed-highway distance/location " +
       "offences sit under 950-400E and carry their own entries.",
@@ -219,7 +223,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     bylaw:
       "Toronto Municipal Code § 950-405D (prohibited time/day) / § 950-405D.1 " +
       "(rush hour)",
-    setFine: "$125.00 prohibited / $175.00 rush hour (effective 2024-08-01)",
+    setFine: "$120.00 prohibited / $300.00 rush hour (Ch. 610, Feb 2025)",
     verifyNote: "Check whether the ticket is 405D or 405D.1 — the fine differs.",
     grounds: [
       {
@@ -248,7 +252,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     description:
       "Park on a signed highway in excess of the maximum time the sign permits.",
     bylaw: "Toronto Municipal Code § 950-405F(1)",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$50.00 (Ch. 610, Feb 2025)",
     verifyNote: "Confirms against the posted maximum-time sign at the location.",
     grounds: [
       {
@@ -278,7 +282,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     description:
       "Park so as to obstruct a driveway or laneway (or within 60 cm of one).",
     bylaw: "Toronto Municipal Code § 950-400D(1)",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$65.00 (Ch. 610, Feb 2025)",
     verifyNote: "Confirm whether ticket is 'obstruct' vs 'within 60 cm' wording.",
     grounds: [
       {
@@ -306,7 +310,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     shortName: "Within 3 m of a fire hydrant",
     description: "Park within 3 metres of a fire hydrant.",
     bylaw: "Toronto Municipal Code § 950-400D(2)",
-    setFine: "$125.00 (effective 2024-08-01)",
+    setFine: "$125.00 (Ch. 610, Feb 2025)",
     verifyNote:
       "Distance is measured from the hydrant; photos with a reference object help.",
     grounds: [
@@ -335,7 +339,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     shortName: "Within 9 m of an intersecting roadway",
     description: "Park within 9 metres of an intersecting roadway.",
     bylaw: "Toronto Municipal Code § 950-400D(3)",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$75.00 (Ch. 610, Feb 2025)",
     verifyNote: "Distance measured from the intersecting roadway.",
     grounds: [
       {
@@ -361,7 +365,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     shortName: "Parked longer than 3 hours",
     description: "Park longer than three hours where that general limit applies.",
     bylaw: "Toronto Municipal Code § 950-400D(5)",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$40.00 (Ch. 610, Feb 2025)",
     verifyNote:
       "Applies to the general 3-hour limit; confirm a different signed limit did " +
       "not apply at the location.",
@@ -391,7 +395,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     description:
       "Park a vehicle without a valid Ontario number plate properly displayed.",
     bylaw: "Toronto Municipal Code § 950-400D(10)(a)",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$50.00 (Ch. 610, Feb 2025)",
     verifyNote:
       "Use 950-400D(10)(b) instead for a non-Ontario plate.",
     grounds: [
@@ -420,7 +424,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     description:
       "Stop within an intersection or a pedestrian crossover.",
     bylaw: "Toronto Municipal Code § 950-400B(2)",
-    setFine: "$200.00 (effective 2024-08-01)",
+    setFine: "$200.00 (Ch. 610, Feb 2025)",
     verifyNote: "High-value offence; factual location is usually the live issue.",
     grounds: [
       {
@@ -448,7 +452,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
     description:
       "Stand a vehicle in a signed transit (bus/streetcar) stop zone.",
     bylaw: "Toronto Municipal Code § 950-400F(1)",
-    setFine: "$200.00 (effective 2024-08-01)",
+    setFine: "$190.00 (Ch. 610, Feb 2025)",
     verifyNote: "High-value; signage and exact zone boundaries are the live issues.",
     grounds: [
       {
@@ -477,7 +481,7 @@ export const OFFENCE_CODES: OffenceCode[] = [
       "Park on a designated snow route (these restrictions apply when a major " +
       "snow condition / parking ban is declared).",
     bylaw: "Toronto Municipal Code § 950-406A",
-    setFine: "$75.00 (effective 2024-08-01)",
+    setFine: "$100.00 (Ch. 610, Feb 2025)",
     verifyNote:
       "VERIFY how/when a snow-route ban is in force (declared event) and the exact " +
       "trigger wording before relying on the 'no ban in effect' ground.",
