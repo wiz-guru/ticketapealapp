@@ -14,9 +14,11 @@
 //  the penalty" and may cancel if the recipient shows, on a balance of
 //  probabilities, that "the violation was not committed as set out in the
 //  penalty notice" — exactly what the grounds below argue. Undue hardship is a
-//  separate cancel/vary/extend path under the same section. Still flagged
-//  VERIFY: only (1) the paid-parking grace-period minutes (offence 1) and
-//  (2) the snow-route ban trigger (offence 12) — both live in Ch. 910/950.
+//  separate cancel/vary/extend path under the same section. The paid-parking
+//  grace period (offence 1) is CONFIRMED at 10 minutes for pay-and-display /
+//  parking-machine spaces (Ch. 910 § 910-2C). The snow-route restriction
+//  (offence 12) is event-triggered: it applies only during a declared Major
+//  Snowstorm Condition or where temporary "no parking" signs are posted.
 //
 // Sources:
 //  - City of Toronto, "Dispute Your Parking Violation" (modified 2026-03-20)
@@ -139,28 +141,27 @@ export const OFFENCE_CODES: OffenceCode[] = [
       "activate; § 910-4C fail to display receipt; § 910-6 exceeds maximum time",
     setFine: "$50.00 (Ch. 610, Feb 2025)",
     verifyNote:
-      "Match the exact § printed on the ticket. GRACE PERIOD: a 10-min " +
-      "Pay-and-Display grace (bylaw 2014, confirmed by Parking Enforcement) is " +
-      "NOT restated on current City/Green P pages — confirm before relying on it.",
+      "Match the exact § printed on the ticket. GRACE PERIOD confirmed: Ch. 910 " +
+      "§ 910-2C exempts pay-and-display / parking-machine spaces where 10 minutes " +
+      "or less has elapsed since expiry. (Does not apply to old coin meters.)",
     grounds: [
       {
         id: "grace-period",
         label: "Within the grace period",
         whenToUse:
-          "Use only if ticketed within a few minutes of expiry. A 10-min " +
-          "Pay-and-Display grace was added to the bylaw in 2014 and confirmed by " +
-          "Parking Enforcement, but it is NOT restated on current City/Green P " +
-          "pages — confirm it still applies before relying on it.",
+          "Use if the ticket time is 10 minutes or less after your paid time " +
+          "expired at a pay-and-display / Green P machine space. Toronto Municipal " +
+          "Code § 910-2C exempts this window. (Not for old single-space coin meters.)",
         evidence: [
           "Your pay-and-display receipt or parking-app payment showing expiry time",
           "A clear photo of the violation notice showing the Time of Violation",
         ],
         template:
           "The Time of Violation recorded on Notice {{citationNumber}} is " +
-          "{{violationTime}} on {{violationDate}}, only minutes after my paid " +
-          "parking expired. I request that the grace period for on-street paid " +
-          "parking be applied and the penalty cancelled, as the vehicle was " +
-          "ticketed within that allowance. {{details}}",
+          "{{violationTime}} on {{violationDate}}, which is 10 minutes or less " +
+          "after my purchased pay-and-display time expired. Under Toronto Municipal " +
+          "Code § 910-2C, payment was not required within that window, so the " +
+          "violation was not committed. {{details}}",
       },
       {
         id: "valid-payment",
@@ -483,27 +484,30 @@ export const OFFENCE_CODES: OffenceCode[] = [
     bylaw: "Toronto Municipal Code § 950-406A",
     setFine: "$100.00 (Ch. 610, Feb 2025)",
     verifyNote:
-      "VERIFY how/when a snow-route ban is in force (declared event) and the exact " +
-      "trigger wording before relying on the 'no ban in effect' ground.",
+      "Snow-route parking is prohibited only during a declared Major Snowstorm " +
+      "Condition or where temporary orange 'no parking' signs are posted for snow " +
+      "removal. During a declared event the whole route is off-limits even if locally cleared.",
     grounds: [
       signageDefect("parked"),
       factualError(),
       {
         id: "no-ban",
-        label: "No winter ban was in effect (use with caution)",
+        label: "No snowstorm condition was declared / no temporary signs",
         whenToUse:
-          "CAUTION: many snow-route signs prohibit parking at ALL times in winter, " +
-          "not only during a declared ban. Use this ONLY if you have confirmed that " +
-          "the specific sign depends on a declared event and that none was active.",
+          "Snow-route parking is only prohibited during a declared Major Snowstorm " +
+          "Condition, or where temporary orange 'no parking' signs were posted for " +
+          "snow removal. Use this if neither applied at your date, time, and location.",
         evidence: [
-          "Proof that no snow-route ban/event was declared or active at the date/time",
-          "Photo of the sign showing its exact wording, and the notice's date/time",
+          "Proof no Major Snowstorm Condition was declared/active then (City notices/news)",
+          "Photos of the location showing no temporary 'no parking' signs were posted",
         ],
         template:
           "Notice {{citationNumber}} alleges a snow-route violation at {{location}} " +
-          "on {{violationDate}} at {{violationTime}}. The applicable snow-route " +
-          "restriction depends on a declared snow event, and no such event was in " +
-          "effect at that time. The violation did not occur. {{details}}",
+          "on {{violationDate}} at {{violationTime}}. Snow-route parking is prohibited " +
+          "only during a declared Major Snowstorm Condition or where temporary signs " +
+          "are posted for snow removal. No such condition was declared and no temporary " +
+          "signs were posted at that time and place, so the violation was not " +
+          "committed. {{details}}",
       },
     ],
   },

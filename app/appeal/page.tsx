@@ -54,6 +54,33 @@ export default function AppealPage() {
     return gs.sort((a, b) => Number(recommended.has(b.id)) - Number(recommended.has(a.id)));
   }, [offence, recommended]);
 
+  // 15-day screening deadline computed from the violation date.
+  const deadline = useMemo(() => {
+    const d = new Date(ticket.violationDate);
+    if (isNaN(d.getTime())) return null;
+    const due = new Date(d);
+    due.setDate(due.getDate() + 15);
+    const days = Math.ceil((due.getTime() - Date.now()) / 86400000);
+    return { iso: due.toISOString().slice(0, 10), days };
+  }, [ticket.violationDate]);
+
+  function addToCalendar() {
+    if (!deadline) return;
+    const dt = deadline.iso.replace(/-/g, "");
+    const ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//FreeTicketAppeal//EN",
+      "BEGIN:VEVENT", "UID:taa-" + (ticket.citationNumber || Date.now()),
+      "DTSTART;VALUE=DATE:" + dt,
+      "SUMMARY:Parking ticket dispute deadline" + (ticket.citationNumber ? " (" + ticket.citationNumber + ")" : ""),
+      "DESCRIPTION:Last day to request a screening review with the City of Toronto (secure.toronto.ca/webapps/parking).",
+      "END:VEVENT", "END:VCALENDAR",
+    ].join("\r\n");
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = "parking-dispute-deadline.ics"; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const set = (k: keyof TicketData) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setTicket({ ...ticket, [k]: e.target.value });
 
@@ -168,6 +195,33 @@ export default function AppealPage() {
 
       {step === "result" && (
         <div>
+          {deadline && (
+            <div
+              className="notice"
+              style={{
+                marginBottom: 16,
+                ...(deadline.days <= 3
+                  ? { background: "#fdeeea", borderColor: "#f0b4a8", color: "#8a2c14" }
+                  : {}),
+              }}
+            >
+              <strong>
+                {deadline.days > 0
+                  ? deadline.days + (deadline.days === 1 ? " day" : " days") + " left to file"
+                  : deadline.days === 0
+                  ? "Your deadline is today"
+                  : "The 15-day deadline has passed"}
+              </strong>{" "}
+              — request your screening review by {deadline.iso} (15 days from the
+              violation date).{" "}
+              {deadline.days < 0
+                ? "You may still request an extension (up to 60 days) with reasons. "
+                : ""}
+              <a href="#" onClick={(e) => { e.preventDefault(); addToCalendar(); }}>
+                Add to calendar
+              </a>
+            </div>
+          )}
           <div className="card">
             <h2 style={{ marginTop: 0 }}>Your draft — paste this into the City portal</h2>
             <div className="letter">{letter}</div>
