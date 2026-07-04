@@ -5,7 +5,7 @@ export const metadata = {
 export default function LegalPage() {
   const updated = "June 2026";
   return (
-    <div>
+    <div className="container">
       <h1>Terms, Privacy &amp; Disclaimer</h1>
       <p className="muted">Last updated: {updated}</p>
 

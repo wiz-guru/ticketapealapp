@@ -30,6 +30,7 @@ export interface DefenseGround {
   whenToUse: string;
   evidence: string[];
   template: string;
+  framing?: string; // overrides SCREENING_FRAMING (e.g. hardship grounds)
 }
 
 export interface OffenceCode {
@@ -85,8 +86,39 @@ function signageDefect(actionWord: string): DefenseGround {
       "Notice {{citationNumber}} relies on an official sign at {{location}} on " +
       "{{violationDate}}. The regulatory sign was missing, obscured, or not " +
       "reasonably visible from where the vehicle was, as shown in the attached " +
-      "photographs. Absent adequate signage the restriction was not validly " +
-      "posted and the violation did not occur. {{details}}",
+      "photographs. As the sign could not be seen by a driver exercising " +
+      "reasonable care, adequate notice of any restriction was not given and the " +
+      "restriction was not validly conveyed. I ask that the penalty be cancelled. " +
+      "{{details}}",
+  };
+}
+
+// Alternative framing for relief that does NOT dispute the facts.
+export const HARDSHIP_FRAMING =
+  "I am requesting a screening review of this Parking Violation Notice. I am not " +
+  "disputing that the event occurred. I am requesting relief on the basis of " +
+  "undue hardship, for the reason(s) set out below.";
+
+// Undue hardship is the relief the City emphasizes most at screening. It is
+// appended to every offence below (see the loop after OFFENCE_CODES).
+function undueHardship(): DefenseGround {
+  return {
+    id: "undue-hardship",
+    label: "Undue hardship (financial / medical)",
+    whenToUse:
+      "Use if you cannot reasonably pay due to a significant drop in income, " +
+      "illness, an unexpected expense, or similar. This asks the City to cancel, " +
+      "reduce, or extend time to pay — it does NOT dispute that the event happened.",
+    evidence: [
+      "A CRA Notice of Assessment (the City generally requires this)",
+      "Proof of the hardship (e.g. record of income loss, medical or expense documents)",
+    ],
+    framing: HARDSHIP_FRAMING,
+    template:
+      "I am experiencing undue hardship that prevents me from reasonably paying " +
+      "this penalty. {{details}} Supporting documentation is attached. I " +
+      "respectfully request that the penalty be cancelled or reduced, or that the " +
+      "time to pay be extended.",
   };
 }
 
@@ -156,6 +188,23 @@ export const OFFENCE_CODES: OffenceCode[] = [
       "Confirm the ticket cites 950-405A; related signed-highway distance/location " +
       "offences sit under 950-400E and carry their own entries.",
     grounds: [
+      {
+        id: "outside-hours",
+        label: "Ticket time/day is outside the posted prohibition",
+        whenToUse:
+          "The Time of Violation falls outside the day(s)/hours the sign prohibits " +
+          "parking (e.g. ticketed at 7:00 PM when the sign reads 'No Parking 8 AM - 6 PM').",
+        evidence: [
+          "Photo of the sign showing the exact prohibited days/hours",
+          "Photo of the notice showing the Time of Violation",
+        ],
+        template:
+          "Notice {{citationNumber}} alleges parking prohibited by sign at " +
+          "{{location}} on {{violationDate}} at {{violationTime}}. The posted sign " +
+          "prohibits parking only during specified days/hours, and the recorded " +
+          "time falls outside that window (see attached photographs). Parking was " +
+          "therefore permitted and the violation did not occur. {{details}}",
+      },
       signageDefect("parked"),
       factualError(),
     ],
@@ -433,27 +482,35 @@ export const OFFENCE_CODES: OffenceCode[] = [
       "VERIFY how/when a snow-route ban is in force (declared event) and the exact " +
       "trigger wording before relying on the 'no ban in effect' ground.",
     grounds: [
+      signageDefect("parked"),
+      factualError(),
       {
         id: "no-ban",
-        label: "No snow-route ban was in effect",
+        label: "No winter ban was in effect (use with caution)",
         whenToUse:
-          "No major snow condition / parking ban had been declared for that time.",
+          "CAUTION: many snow-route signs prohibit parking at ALL times in winter, " +
+          "not only during a declared ban. Use this ONLY if you have confirmed that " +
+          "the specific sign depends on a declared event and that none was active.",
         evidence: [
-          "Any record that no ban was declared/active at the date and time",
-          "Photo of the notice showing date/time",
+          "Proof that no snow-route ban/event was declared or active at the date/time",
+          "Photo of the sign showing its exact wording, and the notice's date/time",
         ],
         template:
           "Notice {{citationNumber}} alleges a snow-route violation at {{location}} " +
-          "on {{violationDate}} at {{violationTime}}. No snow-route parking ban was " +
-          "in effect at that time. The violation did not occur. {{details}}",
+          "on {{violationDate}} at {{violationTime}}. The applicable snow-route " +
+          "restriction depends on a declared snow event, and no such event was in " +
+          "effect at that time. The violation did not occur. {{details}}",
       },
-      signageDefect("parked"),
-      factualError(),
     ],
   },
 ];
 
 // Step-by-step filing guidance. VERIFY wording/links against the City page.
+// Undue hardship applies to any offence, so append it to every entry above.
+for (const o of OFFENCE_CODES) {
+  o.grounds.push(undueHardship());
+}
+
 export const FILING_STEPS: string[] = [
   "You have 15 days from the notice date to dispute (up to 60 days to request an extension with reasons).",
   "Go to the City of Toronto Parking Violation Lookup (secure.toronto.ca/webapps/parking) and look up your notice using the violation number + licence plate.",
